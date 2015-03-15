@@ -324,7 +324,7 @@ class DQ(object):
     def round(self):
         '''Round absolute values below the threshold to zero.'''
         for i in range(8):
-            if self.q[i] < DQ.__threshold:
+            if np.abs(self.q[i]) < DQ.__threshold:
                 self.q[i] = 0.;
         return DQ(self.q)
 
