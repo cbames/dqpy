@@ -1,4 +1,8 @@
 import numpy as np
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import axes3d
+import warnings
 
 class DQ(object):
     ''' Dual Quaternion class'''
@@ -11,12 +15,16 @@ class DQ(object):
             values = [values]
         values = np.asarray(values)
         self.q = np.r_[values, np.zeros(8 - values.size)]
+
+    def toRound(self, value):
+        if type(value) is bool:
+            __threshold = value
     
 #    Selection and transformation methods
     def p(self, idx=-1):
         '''
         dq.P returns the primary part of the dual quaternion.
-        dq.P(index), returns the coefficient corresponding to index
+        dq.P(index), returns the coefficient corresponding to index.
         '''
         if idx == -1:
             return DQ(self.q[:4])
@@ -27,7 +35,7 @@ class DQ(object):
     def d(self, idx=-1):
         '''
         dq.D returns the dual part of the dual quaternion.
-        dq.D(index), returns the coefficient corresponding to index
+        dq.D(index), returns the coefficient corresponding to index.
         '''
         if idx == -1:
             return DQ(self.q[4:])
@@ -36,11 +44,11 @@ class DQ(object):
                 return self.q[4+idx]
 
     def re(self):
-        '''Return the real part of the dual quaternion'''
+        '''Return the real part of the dual quaternion.'''
         return DQ(np.r_[self.q[0], 0, 0, 0, self.q[4]])
 
     def im(self):
-        '''Return the imaginary part of the dual quaternion'''
+        '''Return the imaginary part of the dual quaternion.'''
         return DQ(np.r_[0, self.q[1:4], 0, self.q[5:8]])
 
     @staticmethod
@@ -65,44 +73,44 @@ class DQ(object):
     
     @staticmethod
     def c4():
-        ''''matrix C4 that satisfies the relation vec4(x') = C4 * vec4(x)'''
+        ''''matrix C4 that satisfies the relation vec4(x') = C4 * vec4(x).'''
         return np.diag([1, -1, -1, -1])
 
     @staticmethod
     def c8():
-        ''''return C8 matrix that satisfies vec8(x') = C8 * vec8(x)'''
+        ''''return C8 matrix that satisfies vec8(x') = C8 * vec8(x).'''
         return np.diag([1, -1, -1, -1]*2)
 
     def hamiplus4(self):
-        '''return the positive Hamilton operator (4x4) of the quaternion'''
+        '''return the positive Hamilton operator (4x4) of the quaternion.'''
         return np.array([[self.q[0], -self.q[1], -self.q[2], -self.q[4]],\
             [self.q[1], self.q[0], -self.q[3], self.q[2]],\
             [self.q[2], self.q[3], self.q[0], -self.q[1]],
             [self.q[3], -self.q[2], self.q[1], self.q[0]]])
 
     def hamiminus4(self):
-        '''return the negative Hamilton operator (4x4) of the quaternion'''
+        '''return the negative Hamilton operator (4x4) of the quaternion.'''
         return np.array([[self.q[0], -self.q[1], -self.q[2], -self.q[4]],\
             [self.q[1], self.q[0], self.q[3], -self.q[2]],\
             [self.q[2], -self.q[3], self.q[0], self.q[1]],
             [self.q[3], self.q[2], -self.q[1], self.q[0]]])
 
     def hamiplus8(self):
-        '''return the positive Hamilton operator (8x8) of the dual quaternion'''
+        '''return the positive Hamilton operator (8x8) of the dual quaternion.'''
         return np.array([[self.p().hamiplus4(), np.zeros([4, 4])], \
                 [self.d().hamiplus4(), self.p().hamiplus4()]])
 
     def haminus8(self):
-        '''return the negative Hamilton operator (8x8) of the dual quaternion'''
+        '''return the negative Hamilton operator (8x8) of the dual quaternion.'''
         return np.array([[self.p().hamiminus4(), np.zeros([4, 4])], \
                 [self.d().hamiminus4(), self.p().hamiminus4()]])
     
     def vec4(self):
-        '''return the vector with the four dual quaternion coefficients'''
+        '''return the vector with the four dual quaternion coefficients.'''
         return self.q[:4]
 
     def vec8(self):
-        '''return the vector with the eight dual quaternion coefficients'''
+        '''return the vector with the eight dual quaternion coefficients.'''
         return self.q[:]
 
 #    Math methods
@@ -116,14 +124,14 @@ class DQ(object):
         return np.arccos(self.q[0])
 
     def rotation_angle(self):
-        '''returns the rotation angle of dq or an error otherwise'''
+        '''returns the rotation angle of dq or an error otherwise.'''
         if not self.is_unit():
             raise ValueError('The dual quaternion does not have unit norm.')
         return self.p().re().acos()*2
 
     def rotation_axis(self):
         '''returns the rotation axis (nx*i + ny*j + nz*k) of \
-        the unit dual quaternion'''
+        the unit dual quaternion.'''
         if not self.is_unit():
             raise ValueError('The dual quaternion does not have unit norm.')
         phi = np.arccos(self.q[0])
@@ -140,13 +148,13 @@ class DQ(object):
         return self.d() * self.p().conj() * 2
 
     def t(self):
-        '''returns the translation part of dual quaternion'''
+        '''returns the translation part of dual quaternion.'''
         # More specifically, if x = r+DQ.E*(1/2)*p*r,
         # T(x) returns 1+DQ.E*(0.5)*p
         return self * self.p().conj()
 
     def conj(self):
-        '''returns the conjugate of dq'''
+        '''returns the conjugate of dq.'''
         return DQ([self.q[0], -self.q[1], -self.q[2], -self.q[3],\
                    self.q[4], -self.q[5], -self.q[6], -self.q[7]])
 
@@ -162,7 +170,7 @@ class DQ(object):
 
     @staticmethod
     def __quaternion_mul(q_a, q_b):
-        '''returns quaterion multiplication'''
+        '''returns quaterion multiplication.'''
         mat_a = np.array([[q_a[0], -q_a[1], -q_a[2], -q_a[3]], \
                 [q_a[1], q_a[0], -q_a[3], q_a[2]], \
                 [q_a[2], q_a[3], q_a[0], -q_a[1]], \
@@ -170,7 +178,7 @@ class DQ(object):
         return np.dot(mat_a, q_b)
 
     def __mul__(self, other):
-        '''returns the standard dual quaternion multiplication'''
+        '''returns the standard dual quaternion multiplication.'''
         if other.__class__ != DQ:
             other = DQ(other)
         non_dual = DQ.__quaternion_mul(self.q[:4], other.q[:4])
@@ -179,14 +187,14 @@ class DQ(object):
         return DQ(np.r_[non_dual, dual])
 
     def inv(self):
-        '''returns the inverse of the dual quaternion'''
+        '''returns the inverse of the dual quaternion.'''
         dq_c = self.conj()
         dq_q = self * dq_c
         inv = DQ([1/dq_q.q[0], 0, 0, 0, -dq_q.q[4]/(dq_q.q[0]**2)])
         return dq_c*inv
 
     def log(self):
-        '''returns the logarithm of the dual quaternion'''
+        '''returns the logarithm of the dual quaternion.'''
         if not self.is_unit():
             raise ValueError('The log function is currently defined \
                 only for unit dual quaternions.')
@@ -198,7 +206,7 @@ class DQ(object):
         '''returns the exponential of the pure dual quaternion'''
         if self.re() != 0:
             raise ValueError('The exponential operation is defined only \
-                for pure dual quaternions')
+                for pure dual quaternions.')
         phi = np.linalg.norm(self.p().q[:])
         if phi != 0:
             prim = self.p() * (np.sin(phi)/phi) + np.cos(phi)
@@ -210,14 +218,14 @@ class DQ(object):
         '''
         returns the dual quaternion corresponding to the operation
         exp(m*log(dq)), where dq is a dual quaternion and m is a real number.
-        For the moment, this operation is defined only for unit dual quaternions
+        For the moment, this operation is defined only for unit dual quaternions.
         '''
         if not isinstance(num, (int, float)):
             raise ValueError('The second parameter must be a double.')
         return (self.log() * num).exp()
 
     def norm(self):
-        '''returns the dual scalar corresponding to the norm of dq'''
+        '''returns the dual scalar corresponding to the norm of dq.'''
         dq_a = self.conj()*self
     # Taking the square root (compatible with the definition of quaternion norm)
     # This is performed based on the Taylor expansion.
@@ -232,25 +240,25 @@ class DQ(object):
             return dq_a
 
     def normalize(self):
-        '''normalizes the dual quaternion'''
+        '''normalizes the dual quaternion.'''
         return self * self.norm().inv()
 
     def cross(self, other):
-        '''returns the cross product between two dual quaternions'''
+        '''returns the cross product between two dual quaternions.'''
         return (self*other - other*self) * .5
 
     def dot(self, other):
-        '''returns the dot product between two dual quaternions'''
+        '''returns the dot product between two dual quaternions.'''
         return -(self*other + other*self) * .5
 
     def pinv(self):
-        '''returns the inverse of dq under the decompositional'''
+        '''returns the inverse of dq under the decompositional.'''
         conj = self.conj()
         tmp = self.t() * conj.t()
         return tmp.conj() * conj
 
     def dec(self, other):
-        '''returns decompositional multiplication between dual quaternions'''
+        '''returns decompositional multiplication between dual quaternions.'''
         return self.t() * other.t() * self.p() * other.p()
 
 #    Comparison and other methods
@@ -265,7 +273,7 @@ class DQ(object):
         return self.conj()
 
     def is_unit(self):
-        '''returns True if dq is a unit norm dual quaternion, False otherwise'''
+        '''returns True if dq is a unit norm dual quaternion, False otherwise.'''
         if self.norm() == 1:
             return True
         else:
@@ -312,3 +320,54 @@ class DQ(object):
 
     def __repr__(self):
         return str(self)
+
+    def round(self):
+        '''Round absolute values below the threshold to zero.'''
+        for i in range(8):
+            if self.q[i] < DQ.__threshold:
+                self.q[i] = 0.;
+        return DQ(self.q)
+
+    def plot(self, scale = 1.):
+        '''
+        DQ.plot(dq, OPTIONS) plots the dual quaternion dq.
+        Ex.: plot(dq, scale=5) will plot dq with the axis scaled by a factor of 5
+        '''
+        if self.is_unit():
+
+            # create unit vectors and rotate them by the quaternion part of dq.
+            t1 = DQ.e() * [0, scale*.5, 0, 0] + 1
+            t2 = DQ.e() * [0, 0, scale*.5, 0] + 1
+            t3 = DQ.e() * [0, 0, 0, scale*.5] + 1
+
+            # vector rotation
+            xvec = self.p() * t1 * self.p().conj()
+            yvec = self.p() * t2 * self.p().conj()
+            zvec = self.p() * t3 * self.p().conj()
+
+            # collecting points
+            xx, xy, xz = np.array([0, xvec.translation().q[1]]) + self.translation().q[1], \
+                np.array([0, xvec.translation().q[2]]) + self.translation().q[2], \
+                np.array([0, xvec.translation().q[3]]) + self.translation().q[3]
+            yx, yy, yz = np.array([0, yvec.translation().q[1]]) + self.translation().q[1], \
+                np.array([0, yvec.translation().q[2]]) + self.translation().q[2], \
+                np.array([0, yvec.translation().q[3]]) + self.translation().q[3]
+            zx, zy, zz = np.array([0, zvec.translation().q[1]]) + self.translation().q[1], \
+                np.array([0, zvec.translation().q[2]]) + self.translation().q[2], \
+                np.array([0, zvec.translation().q[3]]) + self.translation().q[3]
+
+            fig = plt.figure()
+            ax = fig.gca(projection='3d')
+            ax.plot(xx, xy, xz, 'r')
+            ax.plot(yx, yy, yz, 'g')
+            ax.plot(zx, zy, zz, 'b')
+            ax.relim()
+            #ax.set_aspect('equal')
+            #ax.set_aspect(1./ax.get_data_ratio())
+            ax.autoscale_view(True,True,True)
+            ax.set_xlabel('x (m)')
+            ax.set_ylabel('y (m)')
+            ax.set_zlabel('z (m)')
+            plt.show(block=False)
+        else:
+            warnings.warn('Only unit dual quaternions can be plotted!')
