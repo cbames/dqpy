@@ -249,7 +249,7 @@ class DQ(object):
 
     def dot(self, other):
         '''returns the dot product between two dual quaternions.'''
-        return -(self*other + other*self) * .5
+        return  self.p(0)*other.p(0) + self.p(1)*other.p(1) + self.p(2)*other.p(2) + self.p(3)*other.p(3) + self.d(0)*other.d(0) +self.d(1)*other.d(1) +self.d(2)*other.d(2) +self.d(3)*other.d(3)
 
     def pinv(self):
         '''returns the inverse of dq under the decompositional.'''
